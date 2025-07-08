@@ -1,0 +1,28 @@
+import requests
+import json
+
+WEBHOOK_URL = "https://discord.com/api/webhooks/1370844879986495488/QFo1TXzkEIkhQIcVsdDgmvNn_ZvPbzwYQB46Mk_YwIZypp0BTRG3X_rmhk6PVTRYV21h"
+
+def send_to_discord(message):
+    data = {
+        "content": message,
+        "username": "Python Webhook Sender"  # Можно изменить имя отправителя
+    }
+    
+    headers = {
+        "Content-Type": "application/json"
+    }
+    
+    response = requests.post(
+        WEBHOOK_URL,
+        data=json.dumps(data),
+        headers=headers
+    )
+    
+    if response.status_code == 204:
+        print("Сообщение успешно отправлено!")
+    else:
+        print(f"Ошибка: {response.status_code} - {response.text}")
+
+if __name__ == "__main__":
+    send_to_discord("hello wrld")
