@@ -1,0 +1,64 @@
+local UserInputService = game:GetService("UserInputService")
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local player = Players.LocalPlayer
+local gui = Instance.new("ScreenGui")
+gui.Parent = player:WaitForChild("PlayerGui")
+gui.ResetOnSpawn = false
+local button = Instance.new("TextButton")
+button.Name = "a"
+button.Size = UDim2.new(0, 60, 0, 60)
+button.Position = UDim2.new(0.5, -30, 0.5, -30)
+button.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+button.BackgroundTransparency = 0.2
+button.Text = "Menu"
+button.TextColor3 = Color3.fromRGB(255, 255, 255)
+button.Font = Enum.Font.GothamBold
+button.TextSize = 18
+button.Parent = gui
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0, 12)
+corner.Parent = button
+local function animateClick()
+    local tween = TweenService:Create(
+        button,
+        TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+        { BackgroundTransparency = 0.4 }
+    )
+    tween:Play()
+    tween.Completed:Wait()
+    TweenService:Create(
+        button,
+        TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+        { BackgroundTransparency = 0.2 }
+    ):Play()
+end
+local isDragging = false
+local dragStartPos, buttonStartPos
+button.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        isDragging = true
+        dragStartPos = Vector2.new(input.Position.X, input.Position.Y)
+        buttonStartPos = Vector2.new(button.AbsolutePosition.X, button.AbsolutePosition.Y)
+        button.BackgroundColor3 = Color3.fromRGB(50, 50, 70)
+    end
+end)
+UserInputService.InputChanged:Connect(function(input)
+    if isDragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+        local newPos = buttonStartPos + (Vector2.new(input.Position.X, input.Position.Y) - dragStartPos)
+        button.Position = UDim2.new(0, newPos.X, 0, newPos.Y)
+    end
+end)
+UserInputService.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        isDragging = false
+        button.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+    end
+end)
+button.MouseButton1Click:Connect(function()
+    animateClick()
+    game:GetService("VirtualInputManager"):SendKeyEvent(true, Enum.KeyCode.B, false, game)
+    task.delay(0.1, function()
+        game:GetService("VirtualInputManager"):SendKeyEvent(false, Enum.KeyCode.B, false, game)
+    end)
+end)
