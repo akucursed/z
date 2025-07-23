@@ -1,0 +1,1346 @@
+--loadstring(game:HttpGet("https://snippet.host/egcsxy/raw"))()
+
+local toggleEnabled = false
+local ctrlHeld = false
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if not gameProcessed then
+        if input.KeyCode == Enum.KeyCode.X then
+            toggleEnabled = true
+        elseif input.KeyCode == Enum.KeyCode.LeftAlt or input.KeyCode == Enum.KeyCode.RightControl then
+            ctrlHeld = true
+        end
+    end
+end)
+
+UserInputService.InputEnded:Connect(function(input, gameProcessed)
+    if not gameProcessed then
+        if input.KeyCode == Enum.KeyCode.X then
+            toggleEnabled = false
+        elseif input.KeyCode == Enum.KeyCode.LeftAlt or input.KeyCode == Enum.KeyCode.RightControl then
+            ctrlHeld = false
+        end
+    end
+end)
+
+local function updateCharacterOrientation()
+    if toggleEnabled or ctrlHeld then
+        local character = game.Players.LocalPlayer.Character
+        if character then
+            local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
+            if humanoidRootPart then
+                local camera = game.Workspace.CurrentCamera
+                if camera then
+                    local cameraDirection = camera.CFrame.LookVector
+                    local angle = math.atan2(cameraDirection.X, cameraDirection.Z)
+                    if ctrlHeld and not toggleEnabled then
+                        angle = angle + math.pi
+                    end
+                    humanoidRootPart.CFrame = CFrame.new(humanoidRootPart.Position) * CFrame.Angles(0, angle, 0)
+                end
+            end
+        end
+    end
+    game:GetService("Players").LocalPlayer.PlayerGui.LocalScript.Enabled = false
+end
+
+RunService.RenderStepped:Connect(updateCharacterOrientation)
+
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+local function setupPlayer(player)
+    local function setupCharacter(character)
+        local bodyEffects = character:WaitForChild("BodyEffects", 5)
+        if not bodyEffects then return end
+        
+        local koValue = bodyEffects:WaitForChild("K.O", 5)
+        if not koValue then return end
+        
+        local hitbox = character:FindFirstChild("Hitbox")
+        if not hitbox then return end
+        
+        local function updateHitbox()
+            if koValue.Value then
+                hitbox.Size = Vector3.new(0.001, 0.001, 0.001)
+            else
+                hitbox.Size = Vector3.new(8.889, 8, 4.444)
+            end
+        end
+        
+        koValue.Changed:Connect(updateHitbox)
+        updateHitbox() -- Применяем начальное состояние
+    end
+
+    player.CharacterAdded:Connect(setupCharacter)
+    if player.Character then
+        setupCharacter(player.Character)
+    end
+end
+
+-- Обработка существующих игроков
+for _, player in ipairs(Players:GetPlayers()) do
+    setupPlayer(player)
+end
+
+-- Обработка новых игроков
+Players.PlayerAdded:Connect(setupPlayer)
+
+--[[
+local x1 = game.Players.LocalPlayer
+local tantoEquipped = true
+
+local function applyGripRotation()
+    local x3
+    repeat
+        x3 = x1.Character:FindFirstChild("[Knife]") or x1.Backpack:FindFirstChild("[Knife]")
+        task.wait()
+    until x3
+    if tantoEquipped then
+        x3.Grip = CFrame.new(0, -0.2, 0) * CFrame.Angles(math.rad(270), 0, 0)
+    else
+        x3.Grip = CFrame.new(0, -0.2, 0) * CFrame.Angles(math.rad(290), 0, 0)
+    end
+end
+
+applyGripRotation()
+x1.CharacterAdded:Connect(function() task.wait(0.1) applyGripRotation() end)
+]]--
+local P = game:GetService("Players")
+local LP = P.LocalPlayer
+local RS = game:GetService("RunService")
+local UIS = game:GetService("UserInputService")
+local hBox = 9
+local SIZE = Vector3.new(hBox, hBox, hBox)
+local MATERIAL = Enum.Material.SmoothPlastic
+local TRANS = 1
+
+local function applyHitbox(char)
+    local root = char:FindFirstChild("HumanoidRootPart")
+    local humanoid = char:FindFirstChild("Humanoid")
+    local bodyEffects = char:FindFirstChild("BodyEffects")
+    
+    if root and root:IsA("BasePart") and humanoid and char ~= LP.Character then
+        if bodyEffects then
+            local ko = bodyEffects:FindFirstChild("K.O.")
+            if ko and ko:IsA("BoolValue") then
+                if ko.Value then
+                    root.Size = Vector3.new(1, 1, 1)
+                else
+                    root.Size = SIZE
+                end
+            end
+        end
+        
+        root.Transparency = TRANS
+        root.Color = Color3.new(1, 1, 1)
+        root.Material = MATERIAL
+        root.CanCollide = false
+    end
+end
+
+local function trackCharacter(plr)
+    plr.CharacterAdded:Connect(function(char)
+        applyHitbox(char)
+    end)
+
+    if plr.Character then
+        applyHitbox(plr.Character)
+    end
+end
+
+UIS.InputBegan:Connect(function(input, gameProcessed)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 and not gameProcessed then
+        for _, plr in ipairs(P:GetPlayers()) do
+            if plr ~= LP and plr.Character then
+                local root = plr.Character:FindFirstChild("HumanoidRootPart")
+                if root and root:IsA("BasePart") then
+                    root.CanCollide = false
+                end
+            end
+        end
+    end
+end)
+
+UIS.InputEnded:Connect(function(input, gameProcessed)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 and not gameProcessed then
+        for _, plr in ipairs(P:GetPlayers()) do
+            if plr ~= LP and plr.Character then
+                local root = plr.Character:FindFirstChild("HumanoidRootPart")
+                if root and root:IsA("BasePart") then
+                    root.CanCollide = false
+                end
+            end
+        end
+    end
+end)
+
+RS.Heartbeat:Connect(function()
+    for _, plr in ipairs(P:GetPlayers()) do
+        if plr ~= LP and plr.Character then
+            applyHitbox(plr.Character)
+        end
+    end
+end)
+
+for _, plr in ipairs(P:GetPlayers()) do
+    trackCharacter(plr)
+end
+
+P.PlayerAdded:Connect(trackCharacter)
+
+local player = game.Players.LocalPlayer
+local inputService = game:GetService("UserInputService")
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character:WaitForChild("Humanoid")
+
+local animIds = {
+    happyJump = "rbxassetid://15609995579",
+    lonely = "rbxassetid://15122972413",
+    fastHands = "rbxassetid://4272351660",
+    victoryDance = "rbxassetid://15506503658",
+    faceQueen = "rbxassetid://14353421343",
+    sleep = "rbxassetid://4689362868"
+}
+local currentAnim = Instance.new("Animation")
+currentAnim.AnimationId = animIds.happyJump
+
+local screenGui = Instance.new("ScreenGui")
+screenGui.Parent = game:GetService("CoreGui")
+
+local mainFrame = Instance.new("Frame")
+mainFrame.Size = UDim2.new(0, 400, 0, 250)
+mainFrame.Position = UDim2.new(0.5, -200, 0.5, -125)
+mainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
+mainFrame.BackgroundTransparency = 0.2
+mainFrame.BorderSizePixel = 1
+mainFrame.BorderColor3 = Color3.fromRGB(100, 100, 150)
+mainFrame.Visible = false
+mainFrame.Parent = screenGui
+
+local tabFrame = Instance.new("Frame")
+tabFrame.Size = UDim2.new(0, 100, 0, 30)
+tabFrame.Position = UDim2.new(1, -110, 0, 10)
+tabFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 60)
+tabFrame.BorderSizePixel = 0
+tabFrame.Parent = mainFrame
+
+local emotesTab = Instance.new("TextButton")
+emotesTab.Size = UDim2.new(0.5, 0, 1, 0)
+emotesTab.Text = "EMOTES"
+emotesTab.TextColor3 = Color3.fromRGB(255, 255, 255)
+emotesTab.BackgroundColor3 = Color3.fromRGB(60, 60, 90)
+emotesTab.BorderSizePixel = 0
+emotesTab.Font = Enum.Font.SciFi
+emotesTab.TextSize = 14
+emotesTab.Parent = tabFrame
+
+local skinsTab = Instance.new("TextButton")
+skinsTab.Size = UDim2.new(0.5, 0, 1, 0)
+skinsTab.Position = UDim2.new(0.5, 0, 0, 0)
+skinsTab.Text = "SKINS"
+skinsTab.TextColor3 = Color3.fromRGB(255, 255, 255)
+skinsTab.BackgroundColor3 = Color3.fromRGB(40, 40, 60)
+skinsTab.BorderSizePixel = 0
+skinsTab.Font = Enum.Font.SciFi
+skinsTab.TextSize = 14
+skinsTab.Parent = tabFrame
+
+local contentFrame = Instance.new("Frame")
+contentFrame.Size = UDim2.new(0, 380, 0, 180)
+contentFrame.Position = UDim2.new(0, 10, 0, 50)
+contentFrame.BackgroundTransparency = 1
+contentFrame.Parent = mainFrame
+
+local happyJumpButton = Instance.new("TextButton")
+happyJumpButton.Size = UDim2.new(0, 180, 0, 40)
+happyJumpButton.Position = UDim2.new(0, 10, 0, 10)
+happyJumpButton.Text = "HAPPY JUMP"
+happyJumpButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+happyJumpButton.BackgroundColor3 = Color3.fromRGB(50, 50, 80)
+happyJumpButton.BorderSizePixel = 1
+happyJumpButton.BorderColor3 = Color3.fromRGB(100, 100, 150)
+happyJumpButton.Font = Enum.Font.SciFi
+happyJumpButton.TextSize = 18
+happyJumpButton.Parent = contentFrame
+
+local lonelyButton = Instance.new("TextButton")
+lonelyButton.Size = UDim2.new(0, 180, 0, 40)
+lonelyButton.Position = UDim2.new(1, -190, 0, 10)
+lonelyButton.Text = "LONELY LONELY"
+lonelyButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+lonelyButton.BackgroundColor3 = Color3.fromRGB(50, 50, 80)
+lonelyButton.BorderSizePixel = 1
+lonelyButton.BorderColor3 = Color3.fromRGB(100, 100, 150)
+lonelyButton.Font = Enum.Font.SciFi
+lonelyButton.TextSize = 18
+lonelyButton.Parent = contentFrame
+
+local fastHandsButton = Instance.new("TextButton")
+fastHandsButton.Size = UDim2.new(0, 180, 0, 40)
+fastHandsButton.Position = UDim2.new(0, 10, 0, 60)
+fastHandsButton.Text = "FAST HANDS"
+fastHandsButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+fastHandsButton.BackgroundColor3 = Color3.fromRGB(50, 50, 80)
+fastHandsButton.BorderSizePixel = 1
+fastHandsButton.BorderColor3 = Color3.fromRGB(100, 100, 150)
+fastHandsButton.Font = Enum.Font.SciFi
+fastHandsButton.TextSize = 18
+fastHandsButton.Visible = true
+fastHandsButton.Parent = contentFrame
+
+local victoryDanceButton = Instance.new("TextButton")
+victoryDanceButton.Size = UDim2.new(0, 180, 0, 40)
+victoryDanceButton.Position = UDim2.new(1, -190, 0, 60)
+victoryDanceButton.Text = "VICTORY DANCE"
+victoryDanceButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+victoryDanceButton.BackgroundColor3 = Color3.fromRGB(50, 50, 80)
+victoryDanceButton.BorderSizePixel = 1
+victoryDanceButton.BorderColor3 = Color3.fromRGB(100, 100, 150)
+victoryDanceButton.Font = Enum.Font.SciFi
+victoryDanceButton.TextSize = 18
+victoryDanceButton.Visible = true
+victoryDanceButton.Parent = contentFrame
+
+local faceQueenButton = Instance.new("TextButton")
+faceQueenButton.Size = UDim2.new(0, 180, 0, 40)
+faceQueenButton.Position = UDim2.new(0, 10, 0, 110)
+faceQueenButton.Text = "FACE QUEEN"
+faceQueenButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+faceQueenButton.BackgroundColor3 = Color3.fromRGB(50, 50, 80)
+faceQueenButton.BorderSizePixel = 1
+faceQueenButton.BorderColor3 = Color3.fromRGB(100, 100, 150)
+faceQueenButton.Font = Enum.Font.SciFi
+faceQueenButton.TextSize = 18
+faceQueenButton.Visible = true
+faceQueenButton.Parent = contentFrame
+
+local sleepButton = Instance.new("TextButton")
+sleepButton.Size = UDim2.new(0, 180, 0, 40)
+sleepButton.Position = UDim2.new(1, -190, 0, 110)
+sleepButton.Text = "SLEEP"
+sleepButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+sleepButton.BackgroundColor3 = Color3.fromRGB(50, 50, 80)
+sleepButton.BorderSizePixel = 1
+sleepButton.BorderColor3 = Color3.fromRGB(100, 100, 150)
+sleepButton.Font = Enum.Font.SciFi
+sleepButton.TextSize = 18
+sleepButton.Visible = true
+sleepButton.Parent = contentFrame
+
+fastHandsButton.MouseButton1Click:Connect(function()
+    stopAllAnimations()
+    currentAnim.AnimationId = animIds.fastHands
+end)
+
+victoryDanceButton.MouseButton1Click:Connect(function()
+    stopAllAnimations()
+    currentAnim.AnimationId = animIds.victoryDance
+end)
+
+faceQueenButton.MouseButton1Click:Connect(function()
+    stopAllAnimations()
+    currentAnim.AnimationId = animIds.faceQueen
+end)
+
+sleepButton.MouseButton1Click:Connect(function()
+    stopAllAnimations()
+    currentAnim.AnimationId = animIds.sleep
+end)
+
+local weapons = {
+	{name = "KITTY GPO", skin = "Kitty GPO"},
+	{name = "RGB GPO", skin = "RGB GPO"},
+	{name = "MELONBEAR", skin = "MelonBear"},
+	{name = "CHECKMARK", skin = "CheckmarkKarambit"},
+	{name = "XMAS", skin = "ChristmasKarambit"},
+	{name = "DEMON", skin = "DemonAge"},
+	{name = "SKY", skin = "Sky Age"}
+}
+
+local weaponButtons = {}
+local gridLayout = Instance.new("UIGridLayout")
+gridLayout.CellSize = UDim2.new(0, 110, 0, 30)
+gridLayout.CellPadding = UDim2.new(0, 10, 0, 10)
+gridLayout.Parent = contentFrame
+
+for _, weapon in ipairs(weapons) do
+	local btn = Instance.new("TextButton")
+	btn.Text = weapon.name
+	btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+	btn.BackgroundColor3 = Color3.fromRGB(50, 50, 80)
+	btn.BorderSizePixel = 1
+	btn.BorderColor3 = Color3.fromRGB(100, 100, 150)
+	btn.Font = Enum.Font.SciFi
+	btn.TextSize = 12
+	btn.Visible = false
+	btn.Parent = contentFrame
+	weaponButtons[weapon.name] = btn
+end
+
+local currentAnimTrack = nil
+local isHoldingF = false
+local isPlayingAnim = false
+local pressStartTime = tick()
+
+local function stopAllAnimations()
+	if currentAnimTrack then
+		currentAnimTrack:Stop()
+		currentAnimTrack = nil
+	end
+end
+
+local function playSelectedAnimation()
+	if isPlayingAnim then
+		stopAllAnimations()
+		currentAnimTrack = humanoid:LoadAnimation(currentAnim)
+		currentAnimTrack:Play()
+	end
+end
+
+local function toggleMenu(visible)
+    mainFrame.Visible = visible
+    happyJumpButton.Visible = true
+    lonelyButton.Visible = true
+    fastHandsButton.Visible = true
+    victoryDanceButton.Visible = true
+    faceQueenButton.Visible = true
+    sleepButton.Visible = true
+    for _, btn in pairs(weaponButtons) do
+        btn.Visible = false
+    end
+end
+
+player.CharacterAdded:Connect(function(newChar)
+	character = newChar
+	humanoid = character:WaitForChild("Humanoid")
+	stopAllAnimations()
+end)
+--[[
+inputService.InputBegan:Connect(function(input, gameProcessed)
+	if gameProcessed then return end
+	if input.KeyCode == Enum.KeyCode.F then
+		isHoldingF = true
+		pressStartTime = tick()
+		task.spawn(function()
+			task.wait(0.5)
+			if isHoldingF then
+				toggleMenu(true)
+			end
+		end)
+	elseif input.KeyCode == Enum.KeyCode.W or input.KeyCode == Enum.KeyCode.A or 
+		input.KeyCode == Enum.KeyCode.S or input.KeyCode == Enum.KeyCode.D then
+		stopAllAnimations()
+	end
+end)
+
+inputService.InputEnded:Connect(function(input, gameProcessed)
+	if gameProcessed then return end
+	if input.KeyCode == Enum.KeyCode.F then
+		isHoldingF = false
+		isPlayingAnim = tick() - pressStartTime < 0.5
+		playSelectedAnimation()
+		toggleMenu(false)
+	end
+end)
+]]--
+happyJumpButton.MouseButton1Click:Connect(function()
+	stopAllAnimations()
+	currentAnim.AnimationId = animIds.happyJump
+end)
+
+lonelyButton.MouseButton1Click:Connect(function()
+	stopAllAnimations()
+	currentAnim.AnimationId = animIds.lonely
+end)
+
+emotesTab.MouseButton1Click:Connect(function()
+	emotesTab.BackgroundColor3 = Color3.fromRGB(60, 60, 90)
+	skinsTab.BackgroundColor3 = Color3.fromRGB(40, 40, 60)
+	happyJumpButton.Visible = true
+	lonelyButton.Visible = true
+	for _, btn in pairs(weaponButtons) do
+		btn.Visible = false
+	end
+end)
+
+skinsTab.MouseButton1Click:Connect(function()
+	skinsTab.BackgroundColor3 = Color3.fromRGB(60, 60, 90)
+	emotesTab.BackgroundColor3 = Color3.fromRGB(40, 40, 60)
+	happyJumpButton.Visible = false
+	lonelyButton.Visible = false
+	for _, btn in pairs(weaponButtons) do
+		btn.Visible = true
+	end
+end)
+
+for _, weapon in ipairs(weapons) do
+	weaponButtons[weapon.name].MouseButton1Click:Connect(function()
+		game:GetService("ReplicatedStorage").MainEvent:FireServer("EquipWeaponSkins", "Knife Skins", weapon.skin)
+	end)
+end
+game:GetService("SoundService"):FindFirstChild("AirSounds").Volume = 0
+
+local j1 = game:GetService("Players")
+local j2 = game:GetService("TweenService")
+local j3 = j1.LocalPlayer
+local j4 = game:GetService("CoreGui").RobloxGui.SettingsClippingShield.SettingsShield
+local j5 = j4.MenuContainer
+local j6 = Vector2.new(0.2, 0.5)
+
+local staffTable = {}
+
+local j7 = Instance.new("Frame")
+j7.Name = "StaffListFrame"
+j7.Size = UDim2.new(0, 350, 0.8, 0)
+j7.Position = UDim2.new(0, 10, 0.1, 0)
+j7.BackgroundColor3 = Color3.new(0, 0, 0)
+j7.BackgroundTransparency = 0.3
+j7.BorderSizePixel = 0
+j7.Visible = true
+j7.Parent = j4
+
+local j8 = Instance.new("UICorner")
+j8.CornerRadius = UDim.new(0, 8)
+j8.Parent = j7
+
+local j9 = Instance.new("Frame")
+j9.Name = "Header"
+j9.Size = UDim2.new(1, 0, 0, 40)
+j9.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1)
+j9.BackgroundTransparency = 0.5
+j9.BorderSizePixel = 0
+j9.Parent = j7
+
+local j10 = Instance.new("TextLabel")
+j10.Size = UDim2.new(1, -10, 1, 0)
+j10.Position = UDim2.new(0, 10, 0, 0)
+j10.BackgroundTransparency = 1
+j10.Text = "STAFF LIST"
+j10.TextColor3 = Color3.new(1, 1, 1)
+j10.TextSize = 16
+j10.Font = Enum.Font.GothamBold
+j10.TextXAlignment = Enum.TextXAlignment.Left
+j10.Parent = j9
+
+local j11 = Instance.new("ScrollingFrame")
+j11.Name = "Content"
+j11.Size = UDim2.new(1, -5, 1, -45)
+j11.Position = UDim2.new(0, 5, 0, 45)
+j11.BackgroundTransparency = 1
+j11.ScrollBarThickness = 4
+j11.AutomaticCanvasSize = Enum.AutomaticSize.Y
+j11.Parent = j7
+
+local j12 = Instance.new("UIListLayout")
+j12.Padding = UDim.new(0, 8)
+j12.Parent = j11
+
+local j13 = Instance.new("UIPadding")
+j13.PaddingTop = UDim.new(0, 5)
+j13.Parent = j11
+
+local k1 = game:GetService("TweenService")
+local k2 = game:GetService("CoreGui")
+
+local k3 = Instance.new("ScreenGui")
+k3.Name = "NotifyGui"
+k3.Parent = k2
+k3.ResetOnSpawn = false
+
+local k_offset_up = 37
+local k_center_offset = 0.8
+local k16 = {}
+
+local function k17(k11, k12, k13)
+    local k18 = Instance.new("Frame")
+    k18.Size = UDim2.new(0, 200, 0, 60)
+    k18.Position = UDim2.new(0.5, -100, k_center_offset, 0)
+    k18.BackgroundColor3 = Color3.fromRGB(240, 240, 240)
+    k18.BackgroundTransparency = 1
+    k18.BorderSizePixel = 0
+    k18.Parent = k3
+    k18.ClipsDescendants = true
+
+    local k19 = Instance.new("UICorner")
+    k19.CornerRadius = UDim.new(0, 8)
+    k19.Parent = k18
+
+    local k20 = Instance.new("UIStroke")
+    k20.Color = Color3.fromRGB(180, 180, 180)
+    k20.Thickness = 1
+    k20.Transparency = 0.3
+    k20.Parent = k18
+
+    local k21 = Instance.new("UIGradient")
+    k21.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(200, 200, 200))
+    })
+    k21.Rotation = 90
+    k21.Parent = k18
+
+    local k22 = Instance.new("Folder")
+    k22.Name = "Bubbles"
+    k22.Parent = k18
+
+    for _ = 1, 8 do
+        local k23 = math.random(5, 12)
+        local k24 = Instance.new("Frame")
+        k24.Size = UDim2.new(0, k23, 0, k23)
+        k24.Position = UDim2.new(math.random(), -k23, 1, math.random(0, 40))
+        k24.BackgroundColor3 = Color3.fromRGB(150, 150, 150)
+        k24.BackgroundTransparency = math.random(50, 80) / 100
+        k24.BorderSizePixel = 0
+        k24.Parent = k22
+        
+        local k25 = Instance.new("UICorner")
+        k25.CornerRadius = UDim.new(1, 0)
+        k25.Parent = k24
+        
+        local k26 = k1:Create(
+            k24,
+            TweenInfo.new(
+                math.random(3, 6),
+                Enum.EasingStyle.Linear,
+                Enum.EasingDirection.InOut
+            ),
+            {Position = UDim2.new(k24.Position.X.Scale, 0, -0.1, -k23)}
+        )
+        k26.Completed:Connect(function()
+            k24:Destroy()
+        end)
+        k26:Play()
+    end
+
+    local k27 = Instance.new("TextLabel")
+    k27.Size = UDim2.new(0.9, 0, 0.35, 0)
+    k27.Position = UDim2.new(0.05, 0, 0.1, 0)
+    k27.BackgroundTransparency = 1
+    k27.Text = k11
+    k27.TextColor3 = Color3.fromRGB(50, 50, 50)
+    k27.TextSize = 14
+    k27.Font = Enum.Font.GothamBold
+    k27.TextXAlignment = Enum.TextXAlignment.Left
+    k27.TextWrapped = true
+    k27.Parent = k18
+
+    local k28 = Instance.new("TextLabel")
+    k28.Size = UDim2.new(0.9, 0, 0.5, 0)
+    k28.Position = UDim2.new(0.05, 0, 0.45, 0)
+    k28.BackgroundTransparency = 1
+    k28.Text = k12
+    k28.TextColor3 = Color3.fromRGB(50, 50, 50)
+    k28.TextSize = 10
+    k28.Font = Enum.Font.Gotham
+    k28.TextXAlignment = Enum.TextXAlignment.Left
+    k28.TextWrapped = true
+    k28.Parent = k18
+
+    table.insert(k16, 1, k18)
+
+    local k29 = k1:Create(
+        k18,
+        TweenInfo.new(0.4, Enum.EasingStyle.Sine, Enum.EasingDirection.Out),
+        {BackgroundTransparency = 0.1}
+    )
+    k29:Play()
+
+    for k30, k31 in ipairs(k16) do
+        if k31 ~= k18 then
+            local k32 = k1:Create(
+                k31,
+                TweenInfo.new(0.2, Enum.EasingStyle.Linear),
+                {Position = UDim2.new(0.5, -100, k_center_offset, -k_offset_up * k30)}
+            )
+            k32:Play()
+        end
+    end
+
+    task.delay(k13 or 4, function()
+        local k33 = k1:Create(
+            k18,
+            TweenInfo.new(0.4, Enum.EasingStyle.Sine, Enum.EasingDirection.In),
+            {BackgroundTransparency = 1}
+        )
+        k33.Completed:Connect(function()
+            k18:Destroy()
+            table.remove(k16, table.find(k16, k18))
+            for k34, k35 in ipairs(k16) do
+                local k36 = k1:Create(
+                    k35,
+                    TweenInfo.new(0.2, Enum.EasingStyle.Linear),
+                    {Position = UDim2.new(0.5, -100, k_center_offset, -k_offset_up * k34)}
+                )
+                k36:Play()
+            end
+        end)
+        k33:Play()
+    end)
+end
+
+local function j14(p)
+    local b = p:FindFirstChild("Backpack")
+    if b and b:FindFirstChild("[Web Attach]") then return true end
+    if p.Character and p.Character:FindFirstChild("[Web Attach]") then return true end
+    
+    local df = p:FindFirstChild("DataFolder")
+    if not df then return false end
+    local info = df:FindFirstChild("Information")
+    if not info then return false end
+    local emojis = info:FindFirstChild("HasEmojis")
+    if not (emojis and emojis:IsA("StringValue")) then return false end
+    local val = emojis.Value
+    if not val then return false end
+    
+    local validEmojis = {"🛡", "💼", "🛠️", "🧰", "☄", "🔑"}
+    for _, emoji in ipairs(validEmojis) do
+        if val:find(emoji) then return true end
+    end
+    return false
+end
+
+local currentView = nil
+local viewButtons = {}
+
+local function j15()
+    for _, c in ipairs(j11:GetChildren()) do
+        if c:IsA("Frame") then c:Destroy() end
+    end
+    viewButtons = {}
+
+    for _, p in ipairs(j1:GetPlayers()) do
+        if j14(p) and p.Character then
+            if not table.find(staffTable, p) then
+                table.insert(staffTable, p)
+                k17("Staff joined", "Name: "..p.DisplayName, 5)
+            end
+
+            local j16 = Instance.new("Frame")
+            j16.Size = UDim2.new(1, 0, 0, 60)
+            j16.BackgroundColor3 = Color3.new(0.15, 0.15, 0.15)
+            j16.BackgroundTransparency = 0.5
+            j16.Parent = j11
+
+            local j17 = Instance.new("UICorner")
+            j17.CornerRadius = UDim.new(0, 6)
+            j17.Parent = j16
+
+            local j18 = Instance.new("TextLabel")
+            j18.Size = UDim2.new(0.6, 0, 0.5, 0)
+            j18.Position = UDim2.new(0.05, 0, 0.1, 0)
+            j18.BackgroundTransparency = 1
+            j18.Text = p.DisplayName
+            j18.TextColor3 = Color3.new(1, 1, 1)
+            j18.TextSize = 14
+            j18.Font = Enum.Font.Gotham
+            j18.TextXAlignment = Enum.TextXAlignment.Left
+            j18.Parent = j16
+
+            local j19 = Instance.new("TextLabel")
+            j19.Size = UDim2.new(0.6, 0, 0.3, 0)
+            j19.Position = UDim2.new(0.05, 0, 0.6, 0)
+            j19.BackgroundTransparency = 1
+            j19.Text = "@"..p.Name
+            j19.TextColor3 = Color3.new(0.8, 0.8, 0.8)
+            j19.TextSize = 12
+            j19.Font = Enum.Font.Gotham
+            j19.TextXAlignment = Enum.TextXAlignment.Left
+            j19.Parent = j16
+            
+            -- Получаем эмодзи из HasEmojis
+            local detectedEmojis = ""
+            local df = p:FindFirstChild("DataFolder")
+            if df then
+                local info = df:FindFirstChild("Information")
+                if info then
+                    local emojis = info:FindFirstChild("HasEmojis")
+                    if emojis and emojis:IsA("StringValue") and emojis.Value then
+                        local val = emojis.Value
+                        local validEmojis = {"🛡", "💼", "🛠️", "🧰", "☄", "🔑"}
+                        for _, emoji in ipairs(validEmojis) do
+                            if val:find(emoji) then
+                                detectedEmojis = detectedEmojis .. emoji .. " "
+                            end
+                        end
+                    end
+                end
+            end
+            
+            -- Добавляем эмодзи [Web Attach]
+            if (p:FindFirstChild("Backpack") and p.Backpack:FindFirstChild("[Web Attach]")) or 
+               (p.Character and p.Character:FindFirstChild("[Web Attach]")) then
+                detectedEmojis = detectedEmojis .. "🕸️ "
+            end
+            
+            -- Создаем TextLabel для эмодзи
+            local emojiLabel = Instance.new("TextLabel")
+            emojiLabel.Size = UDim2.new(0.3, 0, 0.5, 0)
+            emojiLabel.Position = UDim2.new(0.35, 0, 0.25, 0)
+            emojiLabel.BackgroundTransparency = 1
+            emojiLabel.Text = detectedEmojis
+            emojiLabel.TextColor3 = Color3.new(1, 1, 0.6)
+            emojiLabel.TextSize = 14
+            emojiLabel.Font = Enum.Font.Gotham
+            emojiLabel.TextXAlignment = Enum.TextXAlignment.Center
+            emojiLabel.Parent = j16
+
+            local j20 = Instance.new("TextButton")
+            j20.Size = UDim2.new(0.3, 0, 0.5, 0)
+            j20.Position = UDim2.new(0.65, 0, 0.25, 0)
+            j20.BackgroundColor3 = Color3.new(0.2, 0.2, 0.2)
+            j20.BackgroundTransparency = 0.5
+            j20.Text = currentView == p and "UNVIEW" or "VIEW"
+            j20.TextColor3 = Color3.new(1, 1, 1)
+            j20.TextSize = 12
+            j20.Font = Enum.Font.GothamBold
+            j20.Parent = j16
+
+            local j21 = Instance.new("UICorner")
+            j21.CornerRadius = UDim.new(0, 4)
+            j21.Parent = j20
+
+            viewButtons[p] = j20
+
+            j20.MouseButton1Click:Connect(function()
+                if currentView == p then
+                    workspace.CurrentCamera.CameraSubject = j3.Character.Humanoid
+                    currentView = nil
+                    j20.Text = "VIEW"
+                else
+                    if currentView then
+                        viewButtons[currentView].Text = "VIEW"
+                    end
+                    workspace.CurrentCamera.CameraSubject = p.Character.Humanoid
+                    currentView = p
+                    j20.Text = "UNVIEW"
+                end
+            end)
+        end
+    end
+end
+
+local function j22()
+    if j5.AnchorPoint ~= j6 then
+        j5.AnchorPoint = j6
+    end
+end
+
+j22()
+j5:GetPropertyChangedSignal("AnchorPoint"):Connect(j22)
+
+j1.PlayerAdded:Connect(function(p)
+    p.CharacterAdded:Connect(function()
+        if j14(p) then
+            task.wait(1)
+            j15()
+        end
+    end)
+    j15()
+end)
+
+j1.PlayerRemoving:Connect(function(p)
+    if j14(p) and table.find(staffTable, p) then
+        k17("Staff logged", "Name: "..p.DisplayName, 5)
+        table.remove(staffTable, table.find(staffTable, p))
+        if currentView == p then
+            workspace.CurrentCamera.CameraSubject = j3.Character.Humanoid
+            currentView = nil
+        end
+    end
+    j15()
+end)
+
+j15()
+
+coroutine.wrap(function()
+    while true do
+        j15()
+        task.wait(1)
+    end
+end)()
+
+getgenv().c = {
+    ['MaxDistance'] = 60,
+    ['Sharpness'] = 1,
+    ['HasEndPart'] = false,
+    ['PartColor'] = {1, 0, 0},
+    ['BeamColor'] = {1, 0, 0},
+    ['PartSize'] = 0.5,
+}
+
+local v1 = game:GetService("Players")
+local v2 = game:GetService("UserInputService")
+local v3 = game:GetService("RunService")
+local v4 = workspace.CurrentCamera
+local v5 = v1.LocalPlayer
+local v6 = {}
+local v36 = false
+
+local function v7(v8)
+    local v9 = Instance.new("Part")
+    v9.Name = "TargetIndicator"
+    v9.Shape = Enum.PartType.Ball
+    v9.Size = Vector3.new(getgenv().c.PartSize, getgenv().c.PartSize, getgenv().c.PartSize)
+    v9.Anchored = true
+    v9.CanCollide = false
+    v9.BrickColor = BrickColor.new(Color3.new(unpack(getgenv().c.PartColor)))
+    v9.Material = Enum.Material.Neon
+    v9.Transparency = 1
+    v9.Parent = workspace
+
+    local v10 = Instance.new("Attachment")
+    v10.Name = "PartAttachment"
+    v10.Parent = v9
+
+    local v11 = Instance.new("Beam")
+    v11.Name = "TargetBeam"
+    v11.Color = ColorSequence.new(Color3.new(unpack(getgenv().c.BeamColor)))
+    v11.Width0 = 0.1
+    v11.Width1 = 0.1
+    v11.FaceCamera = true
+    v11.Transparency = NumberSequence.new(0)
+
+    return v9, v10, v11
+end
+
+local function v12()
+    for v13, v14 in pairs(v1:GetPlayers()) do
+        if v14 ~= v5 and v14.Character and v14.Character:FindFirstChild("HumanoidRootPart") then
+            if not v6[v14] then
+                local v15, v16, v17 = v7(v14)
+                v6[v14] = {
+                    part = v15,
+                    attachment = v16,
+                    beam = v17,
+                    toolAttachment = nil
+                }
+            end
+        end
+    end
+end
+
+local function v18(v19)
+    if v6[v19] then
+        if v6[v19].part then v6[v19].part:Destroy() end
+        if v6[v19].beam then v6[v19].beam:Destroy() end
+        if v6[v19].toolAttachment then v6[v19].toolAttachment:Destroy() end
+        v6[v19] = nil
+    end
+end
+
+local function v20()
+    for v21, v22 in pairs(v6) do
+        if not v21 or not v21.Character or not v21.Character:FindFirstChild("HumanoidRootPart") then
+            v18(v21)
+        end
+    end
+end
+
+local function v23(v24, v25, v26)
+    if v24.Character then
+        local v27 = v24.Character:FindFirstChildOfClass("Tool")
+        if v27 then
+            if v26.Parent then v26:Remove() end
+            if not v25.toolAttachment or v25.toolAttachment.Parent ~= v27.Handle then
+                if v25.toolAttachment then v25.toolAttachment:Destroy() end
+                v25.toolAttachment = Instance.new("Attachment")
+                v25.toolAttachment.Name = "ToolAttachment"
+                v25.toolAttachment.Parent = v27.Handle
+            end
+            v26.Attachment0 = v25.toolAttachment
+            v26.Attachment1 = v25.attachment
+            v26.Parent = v27.Handle
+        else
+            if v26.Parent then v26:Remove() end
+            local v28 = v24.Character:FindFirstChild("RightHand")
+            if v28 then
+                if not v25.toolAttachment or v25.toolAttachment.Parent ~= v28 then
+                    if v25.toolAttachment then v25.toolAttachment:Destroy() end
+                    v25.toolAttachment = Instance.new("Attachment")
+                    v25.toolAttachment.Name = "ToolAttachment"
+                    v25.toolAttachment.Parent = v28
+                end
+                v26.Attachment0 = v25.toolAttachment
+                v26.Attachment1 = v25.attachment
+                v26.Parent = v28
+            end
+        end
+    end
+end
+
+local function v29(v30, v31)
+    if v30.Character then
+        local bodyEffects = v30.Character:FindFirstChild("BodyEffects")
+        if bodyEffects then
+            local mousePos = bodyEffects:FindFirstChild("MousePos")
+            if mousePos and mousePos:IsA("Vector3Value") then
+                local v32 = mousePos.Value
+                local v33 = v30.Character:FindFirstChildOfClass("Tool") and v30.Character:FindFirstChildOfClass("Tool").Handle.Position or v30.Character:FindFirstChild("RightHand").Position
+                local v34 = (v32 - v33).Unit
+                local v35 = (v32 - v33).Magnitude
+
+                if v35 > getgenv().c.MaxDistance then
+                    v32 = v33 + v34 * getgenv().c.MaxDistance
+                end
+
+                v31.Position = v31.Position:Lerp(v32, getgenv().c.Sharpness)
+            end
+        end
+    end
+end
+
+-- Function to create Aim Viewer tool
+local function createAimViewerTool()
+    task.wait(2)
+    local aimViewer = Instance.new("Tool")
+    aimViewer.Name = "Aim Viewer"
+    aimViewer.CanBeDropped = false
+    aimViewer.RequiresHandle = false
+    
+    -- Tool activation event
+    aimViewer.Activated:Connect(function()
+        v36 = not v36
+        if v36 then
+            v12()
+        else
+            for v38, v39 in pairs(v6) do
+                v18(v38)
+            end
+        end
+    end)
+    
+    return aimViewer
+end
+
+-- Function to wait for any tool in backpack and create Aim Viewer
+local function setupAimViewer()
+    local backpack = v5:FindFirstChild("Backpack")
+    if not backpack then return end
+    
+    -- Wait for at least one tool to appear in backpack
+    local hasAnyTool = false
+    for _, item in pairs(backpack:GetChildren()) do
+        if item:IsA("Tool") then
+            hasAnyTool = true
+            break
+        end
+    end
+    
+    if not hasAnyTool then
+        -- Wait for any tool to appear
+        local connection
+        connection = backpack.ChildAdded:Connect(function(child)
+            if child:IsA("Tool") then
+                connection:Disconnect()
+                task.wait(0.1) -- Small delay to ensure backpack is ready
+                createAimViewerTool().Parent = backpack
+            end
+        end)
+        
+        -- Also check periodically in case ChildAdded doesn't fire
+        task.spawn(function()
+            task.wait(0.5)
+            if connection then
+                connection:Disconnect()
+                -- Check again if we still don't have any tools
+                local stillNoTools = true
+                for _, item in pairs(backpack:GetChildren()) do
+                    if item:IsA("Tool") then
+                        stillNoTools = false
+                        break
+                    end
+                end
+                if stillNoTools then
+                    createAimViewerTool().Parent = backpack
+                end
+            end
+        end)
+    else
+        -- Already has tools, create Aim Viewer immediately
+        task.wait(0.1)
+        createAimViewerTool().Parent = backpack
+    end
+end
+
+-- Handle player added/removed
+v1.PlayerAdded:Connect(function(player)
+    if v36 then
+        task.wait(2) -- Wait 2 seconds for character to fully load and MousePos to initialize
+        if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            -- Additional check for BodyEffects and MousePos
+            local bodyEffects = player.Character:FindFirstChild("BodyEffects")
+            if bodyEffects and bodyEffects:FindFirstChild("MousePos") then
+                if not v6[player] then
+                    local v15, v16, v17 = v7(player)
+                    v6[player] = {
+                        part = v15,
+                        attachment = v16,
+                        beam = v17,
+                        toolAttachment = nil
+                    }
+                end
+            end
+        end
+    end
+end)
+
+v1.PlayerRemoving:Connect(function(player)
+    v18(player)
+end)
+
+-- Handle character respawn
+v5.CharacterAdded:Connect(function()
+    task.wait(1) -- Wait for character to fully load
+    setupAimViewer()
+end)
+
+-- Initial setup
+if v5.Character then
+    setupAimViewer()
+end
+
+v3.RenderStepped:Connect(function()
+    if v36 then
+        v20()
+        for v40, v41 in pairs(v6) do
+            if v40 and v40.Character then
+                v29(v40, v41.part)
+                v23(v40, v41, v41.beam)
+            end
+        end
+        
+        -- Check for new players that might have been missed
+        for _, player in pairs(v1:GetPlayers()) do
+            if player ~= v5 and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                local bodyEffects = player.Character:FindFirstChild("BodyEffects")
+                if bodyEffects and bodyEffects:FindFirstChild("MousePos") then
+                    if not v6[player] then
+                        local v15, v16, v17 = v7(player)
+                        v6[player] = {
+                            part = v15,
+                            attachment = v16,
+                            beam = v17,
+                            toolAttachment = nil
+                        }
+                    end
+                end
+            end
+        end
+    end
+end)
+
+local LocalPlayer = game:GetService("Players").LocalPlayer
+local weaponSettings = {
+    ["[Revolver]"] = {
+        ShootingCooldown = 0.03,
+        Range = 999999999,
+    },
+    ["[Double-Barrel SG]"] = {
+        ShootingCooldown = 0.2,
+        Range = 999999999,
+    },
+    ["[TacticalShotgun]"] = {
+        ShootingCooldown = 0.4,
+        Range = 999999999,
+    }
+}
+
+local function modifyTool(tool)
+    local settings = weaponSettings[tool.Name]
+    if settings then
+        for valueName, valueToSet in pairs(settings) do
+            local numberValue = tool:FindFirstChild(valueName)
+            if numberValue and numberValue:IsA("NumberValue") then
+                numberValue.Value = valueToSet
+            end
+        end
+    end
+end
+
+local function getClosestPlayerToCursor()
+    local closestPlayer = nil
+    local closestDistance = math.huge
+    local localPlayer = Players.LocalPlayer
+    local mouse = localPlayer:GetMouse()
+
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= localPlayer and player.Character then
+            local rootPart = player.Character:FindFirstChild("HumanoidRootPart")
+            if rootPart then
+                local screenPoint, visible = workspace.CurrentCamera:WorldToScreenPoint(rootPart.Position)
+                if visible then
+                    local distance = (Vector2.new(mouse.X, mouse.Y) - Vector2.new(screenPoint.X, screenPoint.Y)).Magnitude
+                    if distance < closestDistance then
+                        closestDistance = distance
+                        closestPlayer = player
+                    end
+                end
+            end
+        end
+    end
+
+    return closestPlayer
+end
+
+local currentHighlight = nil
+
+_G.message = function(message)
+    if game:GetService('TextChatService').ChatVersion == Enum.ChatVersion.LegacyChatService then
+        game:GetService('ReplicatedStorage'):WaitForChild('DefaultChatSystemChatEvents'):WaitForChild('SayMessageRequest'):FireServer(message, 'All')
+    else
+        game:GetService("TextChatService").TextChannels.RBXGeneral:SendAsync(message)
+    end
+end
+
+LocalPlayer.DevCameraOcclusionMode = Enum.DevCameraOcclusionMode.Invisicam
+--[[
+function toggleVoice()
+    local button = game:GetService("CoreGui").TopBarApp.TopBarApp.UnibarLeftFrame.UnibarMenu["2"]["3"].toggle_mic_mute.IconHitArea_toggle_mic_mute
+    local RunService = game:GetService("RunService")
+    local startTime = os.clock()
+    local clickTime = 0.05
+    local totalDuration = 0.07
+    local clicked = false
+    local originalPos = button.AbsolutePosition
+
+    local function clickMouse()
+        local VirtualInputManager = game:GetService("VirtualInputManager")
+        local screenCenter = workspace.CurrentCamera.ViewportSize / 2
+        VirtualInputManager:SendMouseButtonEvent(screenCenter.X, screenCenter.Y, 0, true, game, 1)
+        VirtualInputManager:SendMouseButtonEvent(screenCenter.X, screenCenter.Y, 0, false, game, 1)
+    end
+
+    local heartbeatConnection
+    heartbeatConnection = RunService.Heartbeat:Connect(function()
+        local elapsed = os.clock() - startTime
+        local screenCenter = workspace.CurrentCamera.ViewportSize / 2
+        
+        if elapsed < clickTime then
+            button.Position = UDim2.new(0, screenCenter.X - button.AbsoluteSize.X/2 -150, 0, screenCenter.Y - button.AbsoluteSize.Y/2)
+        elseif not clicked then
+            clickMouse()
+            clicked = true
+        else
+            button.Position = UDim2.new(0, originalPos.X, 0, originalPos.Y)
+        end
+        
+        if elapsed >= totalDuration then
+            heartbeatConnection:Disconnect()
+        end
+    end)
+end
+]]--
+LocalPlayer.DevCameraOcclusionMode = Enum.DevCameraOcclusionMode.Invisicam
+--[[
+local p = game:GetService("Players")
+local u = game:GetService("UserInputService")
+local lp = p.LocalPlayer
+local c = lp.Character or lp.CharacterAdded:Wait()
+local h = c:WaitForChild("Humanoid")
+
+local animId = "rbxassetid://129617163195197"  --rbxassetid://140528231948450
+local anim = Instance.new("Animation")
+anim.AnimationId = animId
+local track
+
+local function setupChar(newChar)
+    c = newChar
+    h = newChar:WaitForChild("Humanoid")
+    anim = Instance.new("Animation")
+    anim.AnimationId = animId
+end
+
+local function playAnim()
+    if not h then return end
+    if track then track:Stop() end
+    track = h:LoadAnimation(anim)
+    track:Play()
+end
+
+local function stopOnMove(input)
+    if track and track.IsPlaying then
+        if input.KeyCode == Enum.KeyCode.W or input.KeyCode == Enum.KeyCode.A or input.KeyCode == Enum.KeyCode.S or input.KeyCode == Enum.KeyCode.D then
+            track:Stop()
+        end
+    end
+end
+
+u.InputBegan:Connect(function(input, processed)
+    if not processed then
+        if input.KeyCode == Enum.KeyCode.F then
+            playAnim()
+        else
+            stopOnMove(input)
+        end
+    end
+end)
+
+lp.CharacterAdded:Connect(setupChar)
+]]--
+local p = game:GetService("Players")
+local lp = p.LocalPlayer
+local c = lp.Character or lp.CharacterAdded:Wait()
+local h = c:WaitForChild("Humanoid")
+
+-- Анимации
+local blockedAnim = "rbxassetid://71942987297372"
+local reloadAnim = "rbxassetid://90779396498170"
+local shootAnim = "rbxassetid://139247379359399"
+
+-- Словарь для быстрого доступа к анимациям
+local anims = {
+    [blockedAnim] = true,
+    [reloadAnim] = false,  -- false означает, что анимацию не нужно блокировать
+    [shootAnim] = false
+}
+
+local function setupCharacter(newChar)
+    c = newChar or lp.Character or lp.CharacterAdded:Wait()
+    h = c:WaitForChild("Humanoid")
+    
+    h.AnimationPlayed:Connect(function(track)
+        local animId = track.Animation and track.Animation.AnimationId
+        if animId and anims[animId] == true then
+            track:Stop()
+        end
+    end)
+end
+
+setupCharacter()
+
+lp.CharacterAdded:Connect(setupCharacter)
+
+game:GetService("RunService").Heartbeat:Connect(function()
+    if h then
+        for _, track in pairs(h:GetPlayingAnimationTracks()) do
+            local animId = track.Animation and track.Animation.AnimationId
+            if animId and anims[animId] == true then
+                track:Stop()
+            end
+        end
+    end
+end)
+while wait(0.1) do
+    local character = LocalPlayer.Character
+    if character then
+        for _, tool in ipairs(character:GetChildren()) do
+            if tool:IsA("Tool") and weaponSettings[tool.Name] then
+                modifyTool(tool)
+            end
+        end
+    end
+    game:GetService("Players").LocalPlayer.CameraMaxZoomDistance = 99999
+    local character = LocalPlayer.Character
+    if character then
+        local bodyEffects = character:FindFirstChild("BodyEffects")
+        if bodyEffects then
+            local reload = bodyEffects:FindFirstChild("Reload")
+            if reload and reload:IsA("BoolValue") then
+                reload.Value = false
+            end
+        end
+    end
+end
