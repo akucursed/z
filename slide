@@ -1,77 +1,76 @@
 -- Основные переменные
 local player = game.Players.LocalPlayer
 local UIS = game:GetService("UserInputService")
-local Character = player.Character or player.CharacterAdded:Wait()
-local Humanoid = Character:WaitForChild("Humanoid")
-local Animator = Humanoid:WaitForChild("Animator")
 
--- Настройка анимации слайда
-local slideAnimation = Instance.new("Animation")
-slideAnimation.AnimationId = "rbxassetid://77296183648593"
-local slideTrack = Animator:LoadAnimation(slideAnimation)
+-- Функция для обработки слайда
+local function setupSlide(char)
+    local Humanoid = char:WaitForChild("Humanoid")
+    local Animator = Humanoid:WaitForChild("Animator")
+    
+    -- Настройка анимации слайда
+    local slideAnimation = Instance.new("Animation")
+    slideAnimation.AnimationId = "rbxassetid://77296183648593"
+    local slideTrack = Animator:LoadAnimation(slideAnimation)
 
--- Функция отключения стандартного скрипта слайда
-local function disableSlideScript(char)
-    local slideScript
-    repeat
-        slideScript = char:FindFirstChild("Slide", true)
-        task.wait()
-    until slideScript
-    if slideScript:IsA("LocalScript") then
-        slideScript.Enabled = false
+    -- Отключение стандартного скрипта слайда
+    local function disableSlideScript()
+        local slideScript = char:FindFirstChild("Slide", true)
+        if slideScript and slideScript:IsA("LocalScript") then
+            slideScript.Enabled = false
+        end
     end
+    
+    disableSlideScript()
+    
+    -- Обработчик слайда
+    UIS.InputBegan:Connect(function(input, processed)
+        if processed or input.KeyCode ~= Enum.KeyCode.C or not char:FindFirstChild("HumanoidRootPart") then return end
+        
+        slideTrack:Play()
+        
+        local bodyVelocity = Instance.new("BodyVelocity")
+        bodyVelocity.MaxForce = Vector3.new(50000, 0, 50000)
+        
+        if Humanoid:GetState() == Enum.HumanoidStateType.Climbing then
+            bodyVelocity.MaxForce = Vector3.new(50000, 50000, 50000)
+            bodyVelocity.Velocity = char.HumanoidRootPart.CFrame.LookVector * 100 + Vector3.new(0, 345, 0)
+        else
+            bodyVelocity.Velocity = char.HumanoidRootPart.CFrame.LookVector * 100
+        end
+        
+        bodyVelocity.Parent = char.HumanoidRootPart
+
+        for _ = 1, 8 do
+            task.wait(0.1)
+            bodyVelocity.Velocity *= 0.7
+        end
+        
+        bodyVelocity:Destroy()
+        slideTrack:Stop()
+    end)
 end
 
-disableSlideScript(Character)
-player.CharacterAdded:Connect(disableSlideScript)
+-- Инициализация для текущего персонажа
+local Character = player.Character or player.CharacterAdded:Wait()
+setupSlide(Character)
 
 -- Обработчик пересоздания персонажа
 player.CharacterAdded:Connect(function(newCharacter)
-    Character = newCharacter
-    Humanoid = Character:WaitForChild("Humanoid")
-    Animator = Humanoid:WaitForChild("Animator")
-    slideTrack = Animator:LoadAnimation(slideAnimation)
-    disableSlideScript(newCharacter)
+    setupSlide(newCharacter)
 end)
 
--- Система слайда
-UIS.InputBegan:Connect(function(input, processed)
-    if processed or input.KeyCode ~= Enum.KeyCode.C or not Character:FindFirstChild("HumanoidRootPart") then return end
-    
-    slideTrack:Play()
-    
-    local bodyVelocity = Instance.new("BodyVelocity")
-    bodyVelocity.MaxForce = Vector3.new(50000, 0, 50000)
-    
-    if Humanoid:GetState() == Enum.HumanoidStateType.Climbing then
-        bodyVelocity.MaxForce = Vector3.new(50000, 50000, 50000)
-        bodyVelocity.Velocity = Character.HumanoidRootPart.CFrame.LookVector * 100 + Vector3.new(0, 345, 0)
-    else
-        bodyVelocity.Velocity = Character.HumanoidRootPart.CFrame.LookVector * 100
-    end
-    
-    bodyVelocity.Parent = Character.HumanoidRootPart
-
-    for _ = 1, 8 do
-        task.wait(0.1)
-        bodyVelocity.Velocity *= 0.7
-    end
-    
-    bodyVelocity:Destroy()
-    slideTrack:Stop()
-end)
-
--- Создание интерфейса
-local Players = game:GetService("Players")
+-- Создание кнопки в верхнем правом углу
 local TweenService = game:GetService("TweenService")
 local gui = Instance.new("ScreenGui")
+gui.Name = "SlideButtonUI"
 gui.Parent = player:WaitForChild("PlayerGui")
 gui.ResetOnSpawn = false
 
 local button = Instance.new("TextButton")
 button.Name = "SlideButton"
 button.Size = UDim2.new(0, 60, 0, 60)
-button.Position = UDim2.new(0.5, -30, 0.5, -30)
+button.Position = UDim2.new(1, -70, 0, 10) -- Верхний правый угол
+button.AnchorPoint = Vector2.new(1, 0)
 button.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
 button.BackgroundTransparency = 0.2
 button.Text = "Slide"
@@ -100,51 +99,11 @@ local function animateClick()
     ):Play()
 end
 
--- Система перетаскивания с задержкой
-local isDragging = false
-local dragStartPos, buttonStartPos
-local dragActivated = false
-
-button.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        local dragTimer = tick()
-        button.BackgroundColor3 = Color3.fromRGB(50, 50, 70)
-        
-        -- Ожидание 0.5 секунд для активации перетаскивания
-        while input.UserInputState == Enum.UserInputState.Begin and (tick() - dragTimer) < 0.5 do
-            task.wait()
-        end
-        
-        if input.UserInputState == Enum.UserInputState.Begin and (tick() - dragTimer) >= 0.5 then
-            isDragging = true
-            dragActivated = true
-            dragStartPos = Vector2.new(input.Position.X, input.Position.Y)
-            buttonStartPos = Vector2.new(button.AbsolutePosition.X, button.AbsolutePosition.Y)
-        end
-    end
-end)
-
-UIS.InputChanged:Connect(function(input)
-    if isDragging and dragActivated and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-        local newPos = buttonStartPos + (Vector2.new(input.Position.X, input.Position.Y) - dragStartPos)
-        button.Position = UDim2.new(0, newPos.X, 0, newPos.Y)
-    end
-end)
-
-UIS.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        if not dragActivated then
-            -- Если было короткое нажатие - активируем слайд
-            animateClick()
-            game:GetService("VirtualInputManager"):SendKeyEvent(true, Enum.KeyCode.C, false, game)
-            task.delay(0.1, function()
-                game:GetService("VirtualInputManager"):SendKeyEvent(false, Enum.KeyCode.C, false, game)
-            end)
-        end
-        
-        -- Сброс состояния
-        isDragging = false
-        dragActivated = false
-        button.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
-    end
+-- Обработчик нажатия кнопки
+button.MouseButton1Click:Connect(function()
+    animateClick()
+    game:GetService("VirtualInputManager"):SendKeyEvent(true, Enum.KeyCode.C, false, game)
+    task.delay(0.1, function()
+        game:GetService("VirtualInputManager"):SendKeyEvent(false, Enum.KeyCode.C, false, game)
+    end)
 end)
