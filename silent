@@ -1,0 +1,137 @@
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local Mouse = LocalPlayer:GetMouse()
+local Camera = workspace.CurrentCamera
+local RunService = game:GetService("RunService")
+
+local SilentAim = {
+    Enabled = Config.SilentAim.Enabled,
+    HitPart = "HumanoidRootPart",
+    TargetPlayer = nil,
+    Highlight = nil,
+    CharConn = nil,
+    HumConn = nil,
+    FOV = {
+        Visible = Config.SilentAim.FOV.Visible,
+        Transparency = Config.SilentAim.FOV.Transparency,
+        Thickness = Config.SilentAim.FOV.Thickness,
+        Radius = Config.SilentAim.FOV.Radius,
+        Color = Config.SilentAim.FOV.Color
+    }
+}
+
+local FOVCircle = Drawing.new("Circle")
+FOVCircle.Color = SilentAim.FOV.Color
+FOVCircle.Thickness = SilentAim.FOV.Thickness
+FOVCircle.Filled = false
+FOVCircle.Transparency = SilentAim.FOV.Transparency
+FOVCircle.Radius = SilentAim.FOV.Radius
+
+local function GetRandomPointInRadius(position, radius)
+    local offset
+    repeat
+        offset = Vector3.new(
+            math.random(-radius, radius),
+            math.random(-radius, radius),
+            math.random(-radius, radius)
+        )
+    until offset.Magnitude <= radius
+    return position + offset
+end
+
+local GetClosestPlayer = function()
+    local ClosestDistance, ClosestPart, ClosestPlayer = nil, nil, nil
+    local CenterPosition = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+
+    for _, Player in next, Players:GetPlayers() do
+        if Player ~= LocalPlayer and Player.Character then
+            local Character = Player.Character
+            local HitPart = Character:FindFirstChild(SilentAim.HitPart)
+            local Humanoid = Character:FindFirstChild("Humanoid")
+
+            if HitPart and Humanoid and Humanoid.Health > 0 then
+                local ScreenPosition, Visible = Camera:WorldToScreenPoint(HitPart.Position)
+                if Visible then
+                    local Distance = (CenterPosition - Vector2.new(ScreenPosition.X, ScreenPosition.Y)).Magnitude
+                    if Distance <= SilentAim.FOV.Radius and (not ClosestDistance or Distance < ClosestDistance) then
+                        ClosestDistance, ClosestPart, ClosestPlayer = Distance, HitPart, Player
+                    end
+                end
+            end
+        end
+    end
+
+    return ClosestPart, ClosestPlayer
+end
+
+local function ClearHighlight()
+    if SilentAim.Highlight then
+        SilentAim.Highlight:Destroy()
+        SilentAim.Highlight = nil
+    end
+    if SilentAim.CharConn then
+        SilentAim.CharConn:Disconnect()
+        SilentAim.CharConn = nil
+    end
+    if SilentAim.HumConn then
+        SilentAim.HumConn:Disconnect()
+        SilentAim.HumConn = nil
+    end
+end
+
+local function UpdateHighlight(TargetPlayer)
+    ClearHighlight()
+    if TargetPlayer and TargetPlayer.Character then
+        SilentAim.Highlight = Instance.new("Highlight")
+        SilentAim.Highlight.FillColor = Config.SilentAim.Highlight.FillColor
+        SilentAim.Highlight.OutlineColor = Config.SilentAim.Highlight.OutlineColor
+        SilentAim.Highlight.FillTransparency = Config.SilentAim.Highlight.FillTransparency
+        SilentAim.Highlight.OutlineTransparency = Config.SilentAim.Highlight.OutlineTransparency
+        SilentAim.Highlight.Parent = TargetPlayer.Character
+        
+        local Humanoid = TargetPlayer.Character:FindFirstChild("Humanoid")
+        if Humanoid then
+            SilentAim.HumConn = Humanoid.Died:Connect(function()
+                ClearHighlight()
+                SilentAim.TargetPlayer = nil
+            end)
+        end
+        
+        SilentAim.CharConn = TargetPlayer.CharacterAdded:Connect(function()
+            UpdateHighlight(TargetPlayer)
+        end)
+    end
+end
+
+local grm = getrawmetatable(game)
+local index = grm.__index
+setreadonly(grm, false)
+
+grm.__index = function(self, Index)
+    if not checkcaller() and self == Mouse and SilentAim.Enabled then
+        if Index == "Hit" or Index == "Target" then
+            local TargetPart = GetClosestPlayer()
+            if TargetPart then
+                return CFrame.new(GetRandomPointInRadius(TargetPart.Position, 3))
+            end
+        end
+    end
+    return index(self, Index)
+end
+
+RunService.RenderStepped:Connect(function()
+    FOVCircle.Visible = SilentAim.FOV.Visible and SilentAim.Enabled
+    FOVCircle.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+    FOVCircle.Radius = SilentAim.FOV.Radius
+    FOVCircle.Color = SilentAim.FOV.Color
+    FOVCircle.Transparency = SilentAim.FOV.Transparency
+    FOVCircle.Thickness = SilentAim.FOV.Thickness
+
+    local _, TargetPlayer = GetClosestPlayer()
+    if TargetPlayer ~= SilentAim.TargetPlayer then
+        SilentAim.TargetPlayer = TargetPlayer
+        UpdateHighlight(TargetPlayer)
+    elseif SilentAim.TargetPlayer and SilentAim.TargetPlayer.Character and not SilentAim.TargetPlayer.Character:FindFirstChildOfClass("Highlight") then
+        UpdateHighlight(SilentAim.TargetPlayer)
+    end
+end)
