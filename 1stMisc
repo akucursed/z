@@ -1,5 +1,6 @@
 --loadstring(game:HttpGet("https://snippet.host/egcsxy/raw"))()
 
+
 local toggleEnabled = false
 local ctrlHeld = false
 local UserInputService = game:GetService("UserInputService")
@@ -695,9 +696,18 @@ local function j14(p)
     local val = emojis.Value
     if not val then return false end
     
+    -- Парсим JSON объект
+    local success, emojiTable = pcall(function()
+        return game:GetService("HttpService"):JSONDecode(val)
+    end)
+    
+    if not success or type(emojiTable) ~= "table" then return false end
+    
     local validEmojis = {"🛡", "💼", "🛠️", "🧰", "☄", "🔑"}
     for _, emoji in ipairs(validEmojis) do
-        if val:find(emoji) then return true end
+        if emojiTable[emoji] == true then
+            return true
+        end
     end
     return false
 end
@@ -759,10 +769,17 @@ local function j15()
                     local emojis = info:FindFirstChild("HasEmojis")
                     if emojis and emojis:IsA("StringValue") and emojis.Value then
                         local val = emojis.Value
-                        local validEmojis = {"🛡", "💼", "🛠️", "🧰", "☄", "🔑"}
-                        for _, emoji in ipairs(validEmojis) do
-                            if val:find(emoji) then
-                                detectedEmojis = detectedEmojis .. emoji .. " "
+                        -- Парсим JSON объект
+                        local success, emojiTable = pcall(function()
+                            return game:GetService("HttpService"):JSONDecode(val)
+                        end)
+                        
+                        if success and type(emojiTable) == "table" then
+                            local validEmojis = {"🛡", "💼", "🛠️", "🧰", "☄", "🔑"}
+                            for _, emoji in ipairs(validEmojis) do
+                                if emojiTable[emoji] == true then
+                                    detectedEmojis = detectedEmojis .. emoji .. " "
+                                end
                             end
                         end
                     end
@@ -1333,14 +1350,4 @@ while wait(0.1) do
         end
     end
     game:GetService("Players").LocalPlayer.CameraMaxZoomDistance = 99999
-    local character = LocalPlayer.Character
-    if character then
-        local bodyEffects = character:FindFirstChild("BodyEffects")
-        if bodyEffects then
-            local reload = bodyEffects:FindFirstChild("Reload")
-            if reload and reload:IsA("BoolValue") then
-                reload.Value = false
-            end
-        end
-    end
 end
