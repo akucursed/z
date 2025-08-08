@@ -1,0 +1,109 @@
+local plr = game:GetService("Players").LocalPlayer
+local ws = game:GetService("Workspace")
+local sgui = Instance.new("ScreenGui")
+sgui.ResetOnSpawn = false
+sgui.Parent = plr:WaitForChild("PlayerGui")
+
+local instaBtn = Instance.new("TextButton")
+instaBtn.Text = "INSTA"
+instaBtn.Size = UDim2.new(0,80,0,30)
+instaBtn.Position = UDim2.new(1,-90,0,10)
+instaBtn.BackgroundColor3 = Color3.fromRGB(60,60,60)
+instaBtn.TextColor3 = Color3.fromRGB(255,255,255)
+instaBtn.Font = Enum.Font.GothamBold
+instaBtn.TextSize = 14
+instaBtn.Parent = sgui
+
+local legitBtn = Instance.new("TextButton")
+legitBtn.Text = "LEGIT"
+legitBtn.Size = UDim2.new(0,80,0,30)
+legitBtn.Position = UDim2.new(1,-90,0,50)
+legitBtn.BackgroundColor3 = Color3.fromRGB(60,60,60)
+legitBtn.TextColor3 = Color3.fromRGB(255,255,255)
+legitBtn.Font = Enum.Font.GothamBold
+legitBtn.TextSize = 14
+legitBtn.Parent = sgui
+
+local function getWeapon()
+    local char = plr.Character
+    if char then
+        local tool = char:FindFirstChildOfClass("Tool") or plr.Backpack:FindFirstChildOfClass("Tool")
+        if tool and tool:FindFirstChild("Handle") and tool:FindFirstChild("Fire") then return tool end
+    end
+    return nil
+end
+
+local function getClosest()
+    local closest, dist = nil, math.huge
+    local char = plr.Character
+    if not char then return nil end
+    local root = char:FindFirstChild("HumanoidRootPart")
+    if not root then return nil end
+    for _,v in pairs(game:GetService("Players"):GetPlayers()) do
+        if v ~= plr and v.Character then
+            local hrp = v.Character:FindFirstChild("HumanoidRootPart")
+            if hrp then
+                local d = (hrp.Position - root.Position).Magnitude
+                if d < dist then dist = d closest = v end
+            end
+        end
+    end
+    return closest
+end
+
+local function createTracer(startPos, endPos)
+    local part = Instance.new("Part")
+    part.Anchored = true
+    part.CanCollide = false
+    part.Material = Enum.Material.Neon
+    part.Color = Color3.new(1,1,0)
+    part.Size = Vector3.new(0.2,0.2,(startPos - endPos).Magnitude)
+    part.CFrame = CFrame.new(startPos, endPos) * CFrame.new(0,0,-part.Size.Z/2)
+    part.Parent = ws
+    game:GetService("Debris"):AddItem(part,0.5)
+end
+
+local function legitShoot()
+    local gun = getWeapon()
+    if not gun then return end
+    local target = getClosest()
+    if not target or not target.Character then return end
+    local handle = gun:FindFirstChild("Handle")
+    local fire = gun:FindFirstChild("Fire")
+    if not handle or not fire then return end
+    local hitParts = {"Head","Torso","Left Arm","Right Arm"}
+    local origin = handle.Position
+    for _,partName in pairs(hitParts) do
+        local part = target.Character:FindFirstChild(partName)
+        if part then
+            local params = RaycastParams.new()
+            params.FilterDescendantsInstances = {plr.Character}
+            params.FilterType = Enum.RaycastFilterType.Blacklist
+            local ray = ws:Raycast(origin,(part.Position - origin).Unit * 1000,params)
+            if ray and ray.Instance:IsDescendantOf(target.Character) then
+                createTracer(origin,part.Position)
+                fire:FireServer(handle.Position,part.Position,part,ws.CurrentCamera.CFrame)
+                if handle:FindFirstChild("Shoot") then handle.Shoot:Play() end
+                break
+            end
+        end
+    end
+end
+
+local function instaShoot()
+    local gun = getWeapon()
+    if not gun then return end
+    local target = getClosest()
+    if not target or not target.Character then return end
+    local head = target.Character:FindFirstChild("Head")
+    if not head then return end
+    local handle = gun:FindFirstChild("Handle")
+    local fire = gun:FindFirstChild("Fire")
+    if not handle or not fire then return end
+    createTracer(handle.Position,head.Position)
+    fire:FireServer(handle.Position,head.Position,head,ws.CurrentCamera.CFrame)
+    if handle:FindFirstChild("Shoot") then handle.Shoot:Play() end
+end
+
+instaBtn.MouseButton1Click:Connect(instaShoot)
+legitBtn.MouseButton1Click:Connect(legitShoot)
