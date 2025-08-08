@@ -6,22 +6,22 @@ sgui.Parent = plr:WaitForChild("PlayerGui")
 
 local instaBtn = Instance.new("TextButton")
 instaBtn.Text = "INSTA"
-instaBtn.Size = UDim2.new(0,80,0,30)
-instaBtn.Position = UDim2.new(1,-90,0,10)
+instaBtn.Size = UDim2.new(0,240,0,90)
+instaBtn.Position = UDim2.new(1,-270,0,30)
 instaBtn.BackgroundColor3 = Color3.fromRGB(60,60,60)
 instaBtn.TextColor3 = Color3.fromRGB(255,255,255)
 instaBtn.Font = Enum.Font.GothamBold
-instaBtn.TextSize = 14
+instaBtn.TextSize = 42
 instaBtn.Parent = sgui
 
 local legitBtn = Instance.new("TextButton")
 legitBtn.Text = "LEGIT"
-legitBtn.Size = UDim2.new(0,80,0,30)
-legitBtn.Position = UDim2.new(1,-90,0,50)
+legitBtn.Size = UDim2.new(0,240,0,90)
+legitBtn.Position = UDim2.new(1,-270,0,150)
 legitBtn.BackgroundColor3 = Color3.fromRGB(60,60,60)
 legitBtn.TextColor3 = Color3.fromRGB(255,255,255)
 legitBtn.Font = Enum.Font.GothamBold
-legitBtn.TextSize = 14
+legitBtn.TextSize = 42
 legitBtn.Parent = sgui
 
 local function getWeapon()
