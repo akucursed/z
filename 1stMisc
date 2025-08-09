@@ -1,5 +1,65 @@
 --loadstring(game:HttpGet("https://snippet.host/egcsxy/raw"))()
 
+-- Основные переменные
+local player = game.Players.LocalPlayer
+local UIS = game:GetService("UserInputService")
+
+-- Функция для обработки слайда
+local function setupSlide(char)
+    local Humanoid = char:WaitForChild("Humanoid")
+    local Animator = Humanoid:WaitForChild("Animator")
+    
+    -- Настройка анимации слайда
+    local slideAnimation = Instance.new("Animation")
+    slideAnimation.AnimationId = "rbxassetid://77296183648593"
+    local slideTrack = Animator:LoadAnimation(slideAnimation)
+
+    -- Отключение стандартного скрипта слайда
+    local function disableSlideScript()
+        local slideScript = char:FindFirstChild("Slide", true)
+        if slideScript and slideScript:IsA("LocalScript") then
+            slideScript.Enabled = false
+        end
+    end
+    
+    disableSlideScript()
+    
+    -- Обработчик слайда
+    UIS.InputBegan:Connect(function(input, processed)
+        if processed or input.KeyCode ~= Enum.KeyCode.C or not char:FindFirstChild("HumanoidRootPart") then return end
+        
+        slideTrack:Play()
+        
+        local bodyVelocity = Instance.new("BodyVelocity")
+        bodyVelocity.MaxForce = Vector3.new(50000, 0, 50000)
+        
+        if Humanoid:GetState() == Enum.HumanoidStateType.Climbing then
+            bodyVelocity.MaxForce = Vector3.new(50000, 50000, 50000)
+            bodyVelocity.Velocity = char.HumanoidRootPart.CFrame.LookVector * 100 + Vector3.new(0, 345, 0)
+        else
+            bodyVelocity.Velocity = char.HumanoidRootPart.CFrame.LookVector * 100
+        end
+        
+        bodyVelocity.Parent = char.HumanoidRootPart
+
+        for _ = 1, 8 do
+            task.wait(0.1)
+            bodyVelocity.Velocity *= 0.7
+        end
+        
+        bodyVelocity:Destroy()
+        slideTrack:Stop()
+    end)
+end
+
+-- Инициализация для текущего персонажа
+local Character = player.Character or player.CharacterAdded:Wait()
+setupSlide(Character)
+
+-- Обработчик пересоздания персонажа
+player.CharacterAdded:Connect(function(newCharacter)
+    setupSlide(newCharacter)
+end)
 
 local toggleEnabled = false
 local ctrlHeld = false
@@ -109,6 +169,26 @@ end
 applyGripRotation()
 x1.CharacterAdded:Connect(function() task.wait(0.1) applyGripRotation() end)
 ]]--
+for _,fake in pairs(workspace.Players:GetChildren()) do
+    if fake:IsA("Model") and not game.Players:GetPlayerFromCharacter(fake) then
+        fake:Destroy()
+    end
+end
+
+workspace.Players.ChildAdded:Connect(function(model)
+    if not model:IsA("Model") then return end
+    
+    for _,clone in pairs(workspace.Players:GetChildren()) do
+        if clone.Name == model.Name and clone ~= model then
+            if game.Players:GetPlayerFromCharacter(clone) then
+                model:Destroy()
+            else
+                clone:Destroy()
+            end
+            break
+        end
+    end
+end)
 local P = game:GetService("Players")
 local LP = P.LocalPlayer
 local RS = game:GetService("RunService")
@@ -686,7 +766,6 @@ local function j14(p)
     local b = p:FindFirstChild("Backpack")
     if b and b:FindFirstChild("[Web Attach]") then return true end
     if p.Character and p.Character:FindFirstChild("[Web Attach]") then return true end
-    
     local df = p:FindFirstChild("DataFolder")
     if not df then return false end
     local info = df:FindFirstChild("Information")
@@ -695,14 +774,10 @@ local function j14(p)
     if not (emojis and emojis:IsA("StringValue")) then return false end
     local val = emojis.Value
     if not val then return false end
-    
-    -- Парсим JSON объект
     local success, emojiTable = pcall(function()
         return game:GetService("HttpService"):JSONDecode(val)
     end)
-    
     if not success or type(emojiTable) ~= "table" then return false end
-    
     local validEmojis = {"🛡", "💼", "🛠️", "🧰", "☄", "🔑"}
     for _, emoji in ipairs(validEmojis) do
         if emojiTable[emoji] == true then
@@ -1340,6 +1415,24 @@ game:GetService("RunService").Heartbeat:Connect(function()
         end
     end
 end)
+local UIS = game:GetService("UserInputService")
+
+UIS.InputBegan:Connect(function(input)
+    if input.KeyCode == Enum.KeyCode.E and UIS:IsKeyDown(Enum.KeyCode.LeftControl) then
+        game.ReplicatedStorage.MainEvent:FireServer("Grabbing")
+    end
+end)
+
+game:GetService("RunService").RenderStepped:Connect(function()
+local player =  game:GetService("Players").LocalPlayer
+local character = player.character or player.characterAdded:Wait()
+ for i, part in pairs(character:GetChildren())do
+  if string.match(part.Name, "Arm")or string.match(part.Name, "Hand") then
+   part.LocalTransparencyModifier = 0
+  end
+ end
+end)
+
 while wait(0.1) do
     local character = LocalPlayer.Character
     if character then
