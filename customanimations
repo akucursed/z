@@ -1,0 +1,153 @@
+local P = game:GetService("Players").LocalPlayer
+local PG = P:WaitForChild("PlayerGui")
+
+local S = Instance.new("ScreenGui")
+S.Name = "AnimMenu"
+S.ResetOnSpawn = false
+S.Parent = PG
+
+-- Основной контейнер (будет справа)
+local Container = Instance.new("Frame")
+Container.Name = "Container"
+Container.Size = UDim2.new(0.05, 0, 0.5, 0)
+Container.Position = UDim2.new(0.98, 0, 0.5, 0)
+Container.AnchorPoint = Vector2.new(1, 0.5)
+Container.BackgroundTransparency = 1
+Container.Parent = S
+
+-- Кнопка меню (изначально видна)
+local OB = Instance.new("TextButton")
+OB.Name = "OpenBtn"
+OB.Size = UDim2.new(1, 0, 0.1, 0)
+OB.Position = UDim2.new(0, 0, 0.45, 0)
+OB.AnchorPoint = Vector2.new(0, 0.5)
+OB.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+OB.TextColor3 = Color3.fromRGB(255, 255, 255)
+OB.Text = "☰"
+OB.Font = Enum.Font.SourceSansBold
+OB.TextSize = 20
+OB.Parent = Container
+
+-- Основное меню (изначально скрыто)
+local M = Instance.new("Frame")
+M.Name = "Main"
+M.Size = UDim2.new(2, 0, 1, 0) -- Ширина в 5 раз больше кнопки
+M.Position = UDim2.new(1, 0, 0, 0) -- Позиция X = 1 (правый край контейнера)
+M.AnchorPoint = Vector2.new(1, 0) -- Якорь справа (чтобы расширялось влево)
+M.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+M.BorderSizePixel = 0
+M.Visible = false
+M.Parent = Container
+
+local SF = Instance.new("ScrollingFrame")
+SF.Name = "Scroll"
+SF.Size = UDim2.new(0.9, 0, 0.85, 0)
+SF.Position = UDim2.new(0.05, 0, 0.1, 0)
+SF.BackgroundTransparency = 1
+SF.ScrollBarThickness = 5
+SF.AutomaticCanvasSize = Enum.AutomaticSize.Y
+SF.Parent = M
+
+local UL = Instance.new("UIListLayout")
+UL.Padding = UDim.new(0, 5)
+UL.Parent = SF
+
+local TB = Instance.new("TextBox")
+TB.Name = "SpeedBox"
+TB.Size = UDim2.new(0.9, 0, 0.05, 0)
+TB.Position = UDim2.new(0.05, 0, 0.03, 0)
+TB.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+TB.TextColor3 = Color3.fromRGB(255, 255, 255)
+TB.Text = "1"
+TB.Font = Enum.Font.SourceSansBold
+TB.Parent = M
+
+local CB = Instance.new("TextButton")
+CB.Name = "CloseBtn"
+CB.Size = UDim2.new(0.9, 0, 0.08, 0)
+CB.Position = UDim2.new(0.05, 0, 0.9, 0)
+CB.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+CB.Text = "✕"
+CB.TextColor3 = Color3.fromRGB(255, 255, 255)
+CB.Font = Enum.Font.SourceSansBold
+CB.Parent = M
+
+local A = {
+    {id = "83570358825425", n = "CaramellDancen"},
+    {id = "115518346414107", n = "Gangnam Style"},
+    {id = "109873544976020", n = "Archangel"},
+    {id = "88130117312312", n = "Death"},
+    {id = "93804360271490", n = "Take The L"},
+    {id = "130995344283026", n = "Cute Sit"},
+    {id = "128956534984006", n = "Cute Lie"},
+    {id = "72775266667695", n = "Rat"},
+    {id = "140333103929828", n = "Sturdy"},
+    {id = "114499509000839", n = "Rampage"},
+    {id = "121694328158425", n = "Cat Dance"},
+    {id = "136640519114436", n = "Jumpstyle"},
+    {id = "124896171012585", n = "Garry's Mod"},
+    {id = "75543443460768", n = "Headlock"},
+    {id = "100823802222093", n = "Ziga"}
+}
+
+local function SetupCharacter()
+    local C = P.Character or P.CharacterAdded:Wait()
+    local H = C:WaitForChild("Humanoid")
+    return H
+end
+
+local H = SetupCharacter()
+P.CharacterAdded:Connect(function()
+    H = SetupCharacter()
+end)
+
+local CT = nil
+
+local function StopAnim()
+    if CT then
+        CT:Stop()
+        CT = nil
+    end
+end
+
+local UIS = game:GetService("UserInputService")
+UIS.InputBegan:Connect(function(I, G)
+    if G then return end
+    if I.KeyCode == Enum.KeyCode.W or I.KeyCode == Enum.KeyCode.A or 
+       I.KeyCode == Enum.KeyCode.S or I.KeyCode == Enum.KeyCode.D or 
+       I.KeyCode == Enum.KeyCode.Space then
+        StopAnim()
+    end
+end)
+
+for _, v in pairs(A) do
+    local B = Instance.new("TextButton")
+    B.Name = v.n
+    B.Size = UDim2.new(1, 0, 0, 20)
+    B.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+    B.BorderColor3 = Color3.fromRGB(100, 100, 100)
+    B.Text = v.n
+    B.TextColor3 = Color3.fromRGB(255, 255, 255)
+    B.Font = Enum.Font.SourceSansBold
+    B.TextSize = 12
+    B.Parent = SF
+    
+    B.MouseButton1Click:Connect(function()
+        StopAnim()
+        local Anim = Instance.new("Animation")
+        Anim.AnimationId = "rbxassetid://"..v.id
+        CT = H:LoadAnimation(Anim)
+        CT:Play()
+        CT:AdjustSpeed(tonumber(TB.Text) or 1)
+    end)
+end
+
+OB.MouseButton1Click:Connect(function()
+    OB.Visible = false
+    M.Visible = true
+end)
+
+CB.MouseButton1Click:Connect(function()
+    M.Visible = false
+    OB.Visible = true
+end)
