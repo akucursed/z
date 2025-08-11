@@ -1,3 +1,11 @@
+local player = game:GetService("Players").LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+for _, gui in ipairs(playerGui:GetChildren()) do
+    if gui:IsA("ScreenGui") and gui.Name == "AnimMenu" then
+        gui:Destroy()
+    end
+end
+
 local P = game:GetService("Players").LocalPlayer
 local PG = P:WaitForChild("PlayerGui")
 
@@ -23,7 +31,7 @@ OB.Position = UDim2.new(0, 0, 0.45, 0)
 OB.AnchorPoint = Vector2.new(0, 0.5)
 OB.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 OB.TextColor3 = Color3.fromRGB(255, 255, 255)
-OB.Text = "☰"
+OB.Text = "Animations+++"
 OB.Font = Enum.Font.SourceSansBold
 OB.TextSize = 20
 OB.Parent = Container
@@ -67,7 +75,7 @@ CB.Name = "CloseBtn"
 CB.Size = UDim2.new(0.9, 0, 0.08, 0)
 CB.Position = UDim2.new(0.05, 0, 0.9, 0)
 CB.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-CB.Text = "✕"
+CB.Text = "Close"
 CB.TextColor3 = Color3.fromRGB(255, 255, 255)
 CB.Font = Enum.Font.SourceSansBold
 CB.Parent = M
@@ -80,13 +88,19 @@ local A = {
     {id = "93804360271490", n = "Take The L"},
     {id = "130995344283026", n = "Cute Sit"},
     {id = "128956534984006", n = "Cute Lie"},
-    {id = "72775266667695", n = "Rat"},
+    {id = "72775266667695", n = "Rat Dance"},
+    {id = "97148848007002", n = "Russian Dance"},
+    {id = "112024753958948", n = "Worm"},
     {id = "140333103929828", n = "Sturdy"},
     {id = "114499509000839", n = "Rampage"},
     {id = "121694328158425", n = "Cat Dance"},
     {id = "136640519114436", n = "Jumpstyle"},
     {id = "124896171012585", n = "Garry's Mod"},
     {id = "75543443460768", n = "Headlock"},
+    {id = "136186079016296", n = "Rock That Body"},
+    {id = "120627508113799", n = "9mm Go Bang"},
+    {id = "88596501983638", n = "Dab"},
+    {id = "81697667914197", n = "Miku"},
     {id = "100823802222093", n = "Ziga"}
 }
 
