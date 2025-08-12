@@ -81,7 +81,7 @@ CB.Font = Enum.Font.SourceSansBold
 CB.Parent = M
 
 local A = {
-    {id = "83570358825425", n = "CaramellDancen"},
+    {id = "73785690856046", n = "CaramellDancen"},
     {id = "115518346414107", n = "Gangnam Style"},
     {id = "109873544976020", n = "Archangel"},
     {id = "88130117312312", n = "Death"},
@@ -99,7 +99,6 @@ local A = {
     {id = "75543443460768", n = "Headlock"},
     {id = "136186079016296", n = "Rock That Body"},
     {id = "120627508113799", n = "9mm Go Bang"},
-	{id = "78316090743742", n = "Onion"},
     {id = "88596501983638", n = "Dab"},
     {id = "81697667914197", n = "Miku"},
     {id = "100823802222093", n = "Ziga"}
